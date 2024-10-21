@@ -1,4 +1,5 @@
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class Account implements IAccount {
 
@@ -84,21 +85,24 @@ public class Account implements IAccount {
     }
 
     @Override
-    public void convertToCurrency(String currencyCode, double rate) {
+    public boolean convertToCurrency(String currencyCode, double rate) {
         if (rate <= 0) { // If rate is negative
-            return;
+            return false;
         }
         String S_rate = rate + "";
         this.currency = currencyCode;
         // stripTrailingZero conversion sets the correct format in the new balance/maxOverdrawn
         this.setMaxOverdrawn(new BigDecimal(max_overdrawn.multiply(new BigDecimal(S_rate)).stripTrailingZeros().toPlainString()));
         this.setBalance(new BigDecimal(balance.multiply(new BigDecimal(S_rate)).stripTrailingZeros().toPlainString()));
+        return true;
     }
 
     @Override
     public void TransferToAccount(IAccount to_account) {
         if (this.balance.compareTo(BigDecimal.ZERO) <= 0) {
             return; // Can't transfer negative funds
+        } else if (!Objects.equals(this.getCurrency(), to_account.getCurrency())) {
+            return; // Can't transfer to an account with different currency
         }
         to_account.deposit(this.balance);
         this.setBalance(BigDecimal.ZERO);

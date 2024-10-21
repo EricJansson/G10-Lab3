@@ -21,12 +21,17 @@ public interface IAccount {
     public abstract BigDecimal deposit(BigDecimal amount_to_deposit);
 
     /*
+     * Method to get the Currency code from the account
+     * */
+    public String getCurrency();
+
+    /*
      * Method for converting you money into different currency
      *
      * the method returns true if the conversion has been performed
      * false if the conversion fails
      * */
-    public abstract void convertToCurrency(String currency_code, double rate);
+    public abstract boolean convertToCurrency(String currency_code, double rate);
 
     /*
      * Method that makes transfer from one account to another.
