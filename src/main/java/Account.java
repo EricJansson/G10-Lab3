@@ -38,7 +38,7 @@ public class Account implements IAccount {
     }
 
     public void setBalance(BigDecimal balance) {
-        // if(!(balance.compareTo(this.max_overdrawn.multiply(new BigDecimal(-1))) <= 0)) {
+        // Small change to if statement. (from "<=" to "<") No longer changes value if it equals to 0. No real change in functionality. 
         if(!(balance.compareTo(this.max_overdrawn.multiply(new BigDecimal(-1))) < 0)) {
             this.balance = balance;
         }
@@ -65,6 +65,11 @@ public class Account implements IAccount {
     }
 
     @Override
+    // Problem: Returned the requested amount no matter the balance. Also didn't update the balance.
+    // Fix: 
+    // * Now checks if a withdraw is allowed in regards to the max_overdrawn amount.
+    // * If a withdraw is allowed, the balance will be updated and return the new balance.
+    // Otherwise it will return the old balance.
     public BigDecimal withdraw(BigDecimal requestedAmount) {
         BigDecimal withdrawMax = balance.add(max_overdrawn);
         if (requestedAmount.compareTo(BigDecimal.ZERO) <= 0) { // If requestedAmount is negative
@@ -76,6 +81,10 @@ public class Account implements IAccount {
     }
 
     @Override
+    // Problem: Only returns the balance after the deposit, doesn't actually change the balance.
+    // Fix: 
+    // * Now returns the correct balance. 
+    // * Will return original balance if a negative amount is attempted to be deposited.
     public BigDecimal deposit(BigDecimal amount_to_deposit) {
         if (amount_to_deposit.compareTo(BigDecimal.ZERO) <= 0) { // If requestedAmount is negative
             return this.balance;
@@ -85,6 +94,12 @@ public class Account implements IAccount {
     }
 
     @Override
+    // Problem: Doesn't return the correct type and makes the conversion even with a negative rate. Also, never changed the balance
+    // Fix: 
+    // * Now doesn't change anything with a negative "rate" as input
+    // * Adjusts max_overdrawn to the new currency
+    // * Changes the balance correctly
+    // * Makes some conversion to avoid trailing zeroes during calculation. (Makes the tests show the correct results)
     public boolean convertToCurrency(String currencyCode, double rate) {
         if (rate <= 0) { // If rate is negative
             return false;
@@ -98,6 +113,11 @@ public class Account implements IAccount {
     }
 
     @Override
+    // Problem: Transfered money from an account no matter the currency and balance.
+    // Fix: 
+    // * Can now only transfer positive funds.
+    // * Can only transfer to an account with matching "currency"
+    // * Updates the balance correctly after transfering the funds.
     public void TransferToAccount(IAccount to_account) {
         if (this.balance.compareTo(BigDecimal.ZERO) <= 0) {
             return; // Can't transfer negative funds
@@ -109,6 +129,10 @@ public class Account implements IAccount {
     }
 
     @Override
+    // Problem: The if statement didn't check if the balance was negative and the return amount was off.
+    // Fix: 
+    // * Now withdraws the correct amount
+    // * Withdraws when there are enough funds (positive amount).
     public BigDecimal withdrawAll() {
         if (this.balance.compareTo(BigDecimal.ZERO) <= 0) {
             return this.balance;
