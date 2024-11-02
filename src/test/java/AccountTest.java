@@ -75,67 +75,114 @@ class AccountTest {
 
     @Test
     void testWithdraw() {
+        // Test Case 1: Exact balance withdrawal
         Account myTestAccount = new Account(new BigDecimal(100), "SEK", BigDecimal.ZERO);
-        // Withdrawing 100 SEK with a balance of 100 SEK should result in 0 SEK left.
+        // Expected behavior: Withdrawing 100 SEK from a balance of 100 SEK should leave 0 SEK in the account.
+        // Skeleton code behavior: Worked as expected.
+        // Input reasoning: Tests basic withdrawal functionality with an amount equal to the account balance.
         assertEquals(BigDecimal.ZERO, myTestAccount.withdraw(new BigDecimal(100)));
 
+        // Test Case 2: Attempting a negative withdrawal
         Account myTestAccount2 = new Account(new BigDecimal(10), "SEK", new BigDecimal(10));
-        // It should not be possible to withdraw a negative amount. The balance should keep its original amount
+        // Expected behavior: A negative withdrawal should be ignored, keeping the balance unchanged at 10 SEK.
+        // Skeleton code behavior: Skeleton code tried to process the negative withdrawal, which was fixed.
+        // Input reasoning: Tests for correct handling of invalid input values (negative amounts).
+        // Fix: Add validation to ensure withdrawal amounts are positive.
         assertEquals(new BigDecimal(10), myTestAccount2.withdraw(new BigDecimal(-20)));
 
+        // Test Case 3: Zero amount withdrawal
         Account myTestAccount3 = new Account(new BigDecimal(100), "SEK", new BigDecimal(-100));
-        // Withdrawing 0 shouldn't change the balance
+        // Expected behavior: Withdrawing 0 SEK should leave the balance unchanged at 100 SEK.
+        // Skeleton code behavior: Worked correctly since subtracting 0 doesn't change anything.
+        // Input reasoning: Tests withdrawal with a zero amount to confirm it doesn’t impact the account balance.
         assertEquals(new BigDecimal(100), myTestAccount3.withdraw(BigDecimal.ZERO));
 
+        // Test Case 4: Overdrawing within the allowable limit
         Account myTestAccount4 = new Account(new BigDecimal(1000), "SEK", new BigDecimal(200));
-        // Withdrawing more than the balance (but within overdrawn range) should end up with negative value
+        // Expected behavior: Withdrawing 1100 SEK should reduce the balance to -100 SEK, within the allowable overdraft range.
+        // Skeleton code behavior: It worked as expected.
+        // Input reasoning: Tests withdrawing more than the balance but within the overdraft limit.
         assertEquals(new BigDecimal(-100), myTestAccount4.withdraw(new BigDecimal(1100)));
 
+       // Test Case 5: Exceeding balance and overdraft limit
         Account myTestAccount5 = new Account(new BigDecimal(1000), "USD", new BigDecimal(200));
-        // Withdrawing more than the balance+maxOverdrawn shouldn't be possible and result in the original balance
+        // Expected behavior: Attempting to withdraw 1201 USD should fail, leaving the balance at the original 1000 USD.
+        // Skeleton code behavior: Overdraft limits were not implemented yet so it returned -201.
+        // Input reasoning: Tests how the account handles withdrawal requests exceeding both balance and overdraft limit.
+        // Fix: Add logic to ensure withdrawals beyond the allowable overdraft limit are rejected.
         assertEquals(new BigDecimal(1000), myTestAccount5.withdraw(new BigDecimal(1201)));
     }
 
     @Test
     void testDeposit() {
+        // Test Case 1: Standard deposit with positive balance
         Account myTestAccount = new Account(new BigDecimal(100), "SEK", BigDecimal.ZERO);
-        // A deposit of 50 SEK with a balance of 100 SEK should result in 200 SEK.
+        // Expected behavior: A deposit of 50 SEK with an initial balance of 100 SEK should update the balance to 150 SEK.
+        // Skeleton code behavior: Works as expected
+        // Input reasoning: This straightforward deposit tests basic balance addition functionality.
         assertEquals(new BigDecimal(150), myTestAccount.deposit(new BigDecimal(50)));
 
+         // Test Case 2: Deposit with negative balance
         Account myTestAccount2 = new Account(new BigDecimal(-100), "SEK", new BigDecimal(150));
-        // A low deposit with a negative balance should increase but remain negative.
+        // Expected behavior: A deposit of 20 SEK should increase the balance to -80 SEK, even though it’s still negative.
+        // Skeleton code behavior: Works as expected.
+        // Input reasoning: This case tests how deposits work with accounts in overdraft (negative balance).
         assertEquals(new BigDecimal(-80), myTestAccount2.deposit(new BigDecimal(20)));
 
+        // Test Case 3: Negative deposit
         Account myTestAccount3 = new Account(new BigDecimal(2000), "SEK", BigDecimal.ZERO);
-        // A negative deposit shouldn't be possible and keep the original balance
+        // Expected behavior: A negative deposit should be ignored, keeping the balance at 2000 SEK.
+        // Skeleton code behavior: It allowed a negative deposit, which was fixed.
+        // Input reasoning: Testing with a negative deposit to ensure such values are rejected.
+        // Fix: Add a check to ensure deposit amount is non-negative.
         assertEquals(new BigDecimal(2000), myTestAccount3.deposit(new BigDecimal(-500)));
     }
 
     @Test
     void testConvertToCurrency() {
+        // Test Case 1: Positive rate conversion from USD to SEK
         Account myTestAccount = new Account(new BigDecimal(2000.0), "USD", new BigDecimal(100));
-        // A normal conversion from USD to SEK (with decimal) should result in a tenfold increase in the balance and the overdrawn amount. From 2000 USD to 20000 SEK
+        // Expected behavior: Conversion from 2000 USD to SEK at a rate of 10.0 should result in a balance of 20000 SEK
+        // and max overdrawn limit of 1000 SEK. Currency should change to SEK.
+        // Skeleton code behavior: Worked as expected, except for the maxoverdrawn that was left unchanged.
+        // Input reasoning: Tests currency conversion functionality with a positive rate greater than 1, increasing balance.
+        // Fix: Ensure the maxoverdrawn gets updated aswell.
         assertTrue(myTestAccount.convertToCurrency("SEK", 10.0));
         assertEquals(new BigDecimal(20000), myTestAccount.getBalance());
         assertEquals(new BigDecimal(1000), myTestAccount.getMaxOverdrawn());
         assertEquals("SEK", myTestAccount.getCurrency());
 
+        // Test Case 2: Conversion with negative initial balance
         Account myTestAccount2 = new Account(new BigDecimal(-100), "EUR", new BigDecimal(200));
-        // Negative initial balance should still result in a negative balance (max_overdrawn should be updated at the same rate to the new currency)
+        // Expected behavior: Conversion from -100 EUR to SEK at a rate of 10.0 should result in -1000 SEK balance,
+        // max overdrawn should update to 2000 SEK, and currency should change to SEK.
+        // Skeleton code behavior: Worked as expected, except for the maxoverdrawn that was left unchanged.
+        // Input reasoning: Tests conversion handling of accounts with negative balance and standard conversion rate.
+        // Fix: Ensure the maxoverdrawn gets updated aswell.
         myTestAccount2.convertToCurrency("SEK", 10.0);
         assertEquals(new BigDecimal(-1000), myTestAccount2.getBalance());
         assertEquals(new BigDecimal(2000), myTestAccount2.getMaxOverdrawn());
         assertEquals("SEK", myTestAccount2.getCurrency());
 
+        // Test Case 3: Conversion with a fractional rate
         Account myTestAccount3 = new Account(new BigDecimal(50), "SEK", new BigDecimal(200));
-        // Using a rate that is between 0-1 should decrease the balance and the overdrawn amount.
+        // Expected behavior: Conversion from 50 SEK to USD at a rate of 0.1 should reduce balance to 5 USD
+        // and max overdrawn to 20 USD. Currency should change to USD.
+        // Skeleton code behavior: Worked as expected, except for the maxoverdrawn that was left unchanged.
+        // Input reasoning: Tests conversion with rates between 0 and 1 to confirm expected balance decrease.
+        // Fix: Ensure the maxoverdrawn gets updated aswell.
         myTestAccount3.convertToCurrency("USD", 0.1);
         assertEquals(new BigDecimal(5), myTestAccount3.getBalance());
         assertEquals(new BigDecimal(20), myTestAccount3.getMaxOverdrawn());
         assertEquals("USD", myTestAccount3.getCurrency());
 
+        // Test Case 4: Attempting conversion with a negative rate
         Account myTestAccount4 = new Account(new BigDecimal(10), "SEK", new BigDecimal(20));
-        // Using a negative rate should not make the conversion possible and result in the original values.
+        // Expected behavior: A negative conversion rate should prevent the conversion, leaving balance, max overdrawn,
+        // and currency unchanged.
+        // Skeleton code behavior: Lack of rate validation could incorrectly allow negative rates and skew balance values.
+        // Input reasoning: Tests handling of invalid input by using a negative rate, which should be rejected.
+        // Fix: Add validation to disallow negative rates and return original values without conversion.
         myTestAccount4.convertToCurrency("USD", -10.0);
         assertEquals(new BigDecimal(10), myTestAccount4.getBalance());
         assertEquals(new BigDecimal(20), myTestAccount4.getMaxOverdrawn());
@@ -144,34 +191,54 @@ class AccountTest {
 
     @Test
     void testTransferToAccount() {
+        // Test Case 1: Transfer with a negative balance
         Account myTestAccountA = new Account(new BigDecimal(-100), "SEK", new BigDecimal(100));
         Account myTestAccountB = new Account(new BigDecimal(200), "SEK", new BigDecimal(10));
-        // A transfer with negative funds should not be possible and result in the original values
+        // Expected behavior: Transferring funds with a negative balance should not be possible, and both accounts should keep their original balances.
+        // Skeleton code behavior: Without a check, a negative balance transferred incorrectly.
+        // Input reasoning: Tests prevention of transfers initiated with negative balance.
+        // Fix: Ensure the transfer method validates positive balance before transferring.
         myTestAccountA.TransferToAccount(myTestAccountB);
         assertEquals(new BigDecimal(-100), myTestAccountA.getBalance());
         assertEquals(new BigDecimal(200), myTestAccountB.getBalance());
 
+        // Test Case 2: Transfer a small positive balance to an account with a negative balance
         Account myTestAccountA2 = new Account(new BigDecimal(10), "SEK", new BigDecimal(0));
         Account myTestAccountB2 = new Account(new BigDecimal(-200), "SEK", new BigDecimal(1000));
-        // Transfering a low amount to a negative account should empty one account and increase the other, but stay negative.
+        // Expected behavior: Transferring 10 SEK from Account A to Account B should result in Account A being emptied (balance = 0) 
+        // and Account B increasing its balance by 10 SEK but remaining negative (balance = -190).
+        // Skeleton code behavior: Worked as expected for account B, account A still had 10 though which was resolved to now setting current balance to 0 after successful transfer.
+        // Input reasoning: This case checks if a positive transfer from an account with low funds correctly updates the balance of a receiving account with a negative balance, 
+        // and it ensures that the transfer fully depletes the sending account while only partially offsetting the negative balance in the receiving account.
+        // Fix: Ensure that the transfer method correctly adjusts both account balances.
         myTestAccountA2.TransferToAccount(myTestAccountB2);
-        assertEquals(new BigDecimal(0), myTestAccountA2.getBalance());
-        assertEquals(new BigDecimal(-190), myTestAccountB2.getBalance()); // Added 10 SEK
+        assertEquals(new BigDecimal(0), myTestAccountA2.getBalance()); // Account A should be emptied after the transfer.
+        assertEquals(new BigDecimal(-190), myTestAccountB2.getBalance()); // Account B should increase by 10 SEK, resulting in -190 SEK.
 
+
+        // Test Case 3: Multiple transfers from one account
         Account myTestAccountA3 = new Account(new BigDecimal(100), "SEK", new BigDecimal(0));
         Account myTestAccountB3 = new Account(new BigDecimal(200), "SEK", new BigDecimal(10));
         Account myTestAccountC3 = new Account(new BigDecimal(1000), "SEK", new BigDecimal(10));
-        // Multiple transfers from one account shouldn't be possible since it will empty the account during the first transfer.
-        myTestAccountA3.TransferToAccount(myTestAccountB3); // Account B should now have 300 SEK
-        assertEquals(new BigDecimal(0), myTestAccountA3.getBalance());
-        myTestAccountA3.TransferToAccount(myTestAccountC3); // Account A should now be empty. A transfer of 0 funds shouldn't make any changes to the balances of the sender AND receiver
+        // Expected behavior: First transfer should deplete Account A, adding funds to Account B.
+        // Second transfer from an empty Account A should have no effect on any balances.
+        // Skeleton code behavior: Without any balance check NOR any emptying of the account, both transfers worked which was fixed.
+        // Input reasoning: Tests for blocking transfers when source account is empty after an initial transfer.
+        // Fix: Ensure zero-balance transfers do not proceed and do not alter receiver's balance aswell as (same as test case 2), set balance to 0 after transfer.
+        myTestAccountA3.TransferToAccount(myTestAccountB3);
         assertEquals(new BigDecimal(0), myTestAccountA3.getBalance());
         assertEquals(new BigDecimal(300), myTestAccountB3.getBalance()); // Added 100
+        myTestAccountA3.TransferToAccount(myTestAccountC3);
+        assertEquals(new BigDecimal(0), myTestAccountA3.getBalance());
         assertEquals(new BigDecimal(1000), myTestAccountC3.getBalance()); // Unchanged
 
+        // Test Case 4: Transfer between accounts with different currencies
         Account myTestAccountA4 = new Account(new BigDecimal(10), "USD", new BigDecimal(100));
         Account myTestAccountB4 = new Account(new BigDecimal(20), "SEK", new BigDecimal(1000));
-        // A transfer from to an account with a different currency shouldn't be possible. Should result in the original balance.
+        // Expected behavior: Transfer between accounts with different currencies should not proceed, leaving both balances unchanged.
+        // Skeleton code behavior: Lack of currency validation allowed unintended transfers with mismatched currencies.
+        // Input reasoning: Verifies that currency matching is enforced for transfers.
+        // Fix: Ensure transfer method validates that both accounts use the same currency before proceeding.
         myTestAccountA4.TransferToAccount(myTestAccountB4);
         assertEquals(new BigDecimal(10), myTestAccountA4.getBalance());
         assertEquals(new BigDecimal(20), myTestAccountB4.getBalance());
@@ -179,16 +246,23 @@ class AccountTest {
 
     @Test
     void testWithdrawAll() {
-        Account myTestAccount = new Account(new BigDecimal(-200), "SEK", new BigDecimal(1000));
-        // Can't withdraw with negative balance
+       Account myTestAccount = new Account(new BigDecimal(-200), "SEK", new BigDecimal(1000));
+        // Expected behavior: Cannot withdraw when the balance is negative. The balance should remain unchanged.
+        // Skeleton code behavior: It tried withdrawing a negative number, which should not be allowed.
+        // Input reasoning: This case verifies that the withdrawAll method prevents further withdrawals when the balance is negative.
+        // Fix: Ensure the method checks for a positive balance before performing the withdrawal.
         assertEquals(new BigDecimal(-200), myTestAccount.withdrawAll());
 
         Account myTestAccount2 = new Account(new BigDecimal(200), "SEK", new BigDecimal(1000));
-        // Withdraws full balance
+        // Expected behavior: Withdraws the full balance, resulting in a zero balance.
+        // Skeleton code behavior: Worked as expected.
+        // Input reasoning: This case checks that the full balance can be withdrawn successfully.
         assertEquals(new BigDecimal(0), myTestAccount2.withdrawAll());
 
-        Account myTestAccount3 = new Account(new BigDecimal(-0), "SEK", new BigDecimal(1000));
-        // Withdrawing from an empty account makes no changes (-0 should also be == 0)
+        Account myTestAccount3 = new Account(new BigDecimal(0), "SEK", new BigDecimal(1000));
+        // Expected behavior: Withdrawing from an account with a zero balance should make no changes.
+        // Skeleton code behavior: Worked as expected.
+        // Input reasoning: This case ensures no modifications are made when there is no balance to withdraw.
         assertEquals(new BigDecimal(0), myTestAccount3.withdrawAll());
     }
 }
